@@ -95,7 +95,7 @@ fuzzy_bc_pipeline() {
         print "[" strftime("%H:%M:%S") "] '$prefix': processed " NR " sequences"}' \
             > $STATS_DIR/${prefix}.progress.log) \
     | sort --temporary-directory=$TMP_DIR - | uniq -c \
-    | tee >(cat - > $OUT_DIR/${prefix}_bc_region.txt.gz) \
+    | tee >(gzip > $OUT_DIR/${prefix}_bc_region.txt.gz) \
     | python3 $PY_DIR/itam_costim_bc_regex.py - \
         2> $STATS_DIR/${prefix}_bc_regex.txt \
     | gzip - > $OUT_DIR/${prefix}_bc_table.csv.gz
@@ -120,7 +120,7 @@ fuzzy_bc_pipeline_read1() {
         print "[" strftime("%H:%M:%S") "] '$prefix': processed " NR " sequences"}' \
             > $STATS_DIR/${prefix}.progress.log) \
     | sort --temporary-directory=$TMP_DIR | uniq -c \
-    | tee >(cat - > $OUT_DIR/${prefix}_bc_region.txt.gz) \
+    | tee >(gzip > $OUT_DIR/${prefix}_bc_region.txt.gz) \
     | python3 $PY_DIR/itam_costim_bc_regex.py - \
         2> $STATS_DIR/${prefix}_bc_regex.txt \
     | gzip - > $OUT_DIR/${prefix}_bc_table.csv.gz
