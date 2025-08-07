@@ -34,6 +34,17 @@ Bioinformatics tools for barcode processing and NGS data analysis.
    ./sh/run_bc_pipeline.sh
    ```
 
+4. **Optimize for your workload:**
+   ```bash
+   # For many small files (default):
+   export PARALLEL_JOBS=16  # Process many files concurrently
+   
+   # For few large files:
+   export PARALLEL_JOBS=4   # Fewer concurrent files  
+   export UGREP_JOBS=8      # More threads per file
+   export SORT_PARALLEL=8   # More threads for sorting
+   ```
+
 ## Pipeline Overview
 
 The pipeline processes FASTQ files from S3 to extract and count structured barcode combinations across many samples. For each sample, it:
@@ -62,6 +73,12 @@ See `RCLONE.md` for efficient methods to transfer raw sequencing data from SFTP 
 - `MAX_READS` - Limit reads for testing (optional)
 - `BC_PREFIX`, `BC_SUFFIX` - Barcode flanking sequences
 - `BC_LEN_MIN`, `BC_LEN_MAX` - Barcode region length range
+
+### Parallelization Parameters
+
+- `PARALLEL_JOBS` - Number of samples to process concurrently (default: half of CPU cores)
+- `UGREP_JOBS` - Number of threads for ugrep pattern matching (default: all CPU cores)
+- `SORT_PARALLEL` - Number of threads for sorting operations (default: all CPU cores)
 
 ## Requirements
 

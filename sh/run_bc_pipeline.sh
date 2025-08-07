@@ -33,11 +33,14 @@ N_CORES=$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)
 S3_PATH="${S3_PATH:-s3://roybal-tcsl/tcsl_aav/ngs/illumina_30/repstim_repool2}"
 FILE_PATTERN="${FILE_PATTERN:-TCSL236_repstim_.*L006}"
 PIPELINE_FUNC="${PIPELINE_FUNC:-fuzzy_bc_pipeline_read1}"
-PARALLEL_JOBS="${PARALLEL_JOBS:-$((N_CORES / 2))}"
 OUT_DIR="${OUT_DIR:-~/tcsl236_il30_repstim/out}"
 STATS_DIR="${STATS_DIR:-~/tcsl236_il30_repstim/stats}"
 PY_DIR="${PY_DIR:-$(dirname "$0")/../py}"
 TMP_DIR="${TMP_DIR:-~/data}"
+
+PARALLEL_JOBS="${PARALLEL_JOBS:-$((N_CORES / 2))}"
+UGREP_JOBS="${UGREP_JOBS:-4}"
+SORT_PARALLEL="${SORT_PARALLEL:-4}"
 
 # Expand tildes
 OUT_DIR=$(eval echo "$OUT_DIR")
@@ -50,6 +53,8 @@ echo "S3_PATH: $S3_PATH"
 echo "FILE_PATTERN: $FILE_PATTERN"
 echo "PIPELINE_FUNC: $PIPELINE_FUNC"
 echo "PARALLEL_JOBS: $PARALLEL_JOBS"
+echo "UGREP_JOBS: $UGREP_JOBS"
+echo "SORT_PARALLEL: $SORT_PARALLEL"
 echo "OUT_DIR: $OUT_DIR"
 echo "STATS_DIR: $STATS_DIR"
 echo "======================================"
@@ -57,7 +62,7 @@ echo "======================================"
 # Setup
 source "$(dirname "$0")/bc_pipeline_fxns.sh"
 mkdir -p "$OUT_DIR" "$STATS_DIR"
-export S3_PATH OUT_DIR STATS_DIR PY_DIR TMP_DIR BC_PREFIX BC_SUFFIX BC_LEN_MIN BC_LEN_MAX MAX_READS
+export S3_PATH OUT_DIR STATS_DIR PY_DIR TMP_DIR BC_PREFIX BC_SUFFIX BC_LEN_MIN BC_LEN_MAX MAX_READS UGREP_JOBS SORT_PARALLEL PROGRESS_FREQUENCY
 export -f fuzzy_bc_region_match fuzzy_bc_pipeline fuzzy_bc_pipeline_read1
 
 # Run the pipeline

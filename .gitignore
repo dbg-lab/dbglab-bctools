@@ -34,3 +34,4 @@ stats/
 *.key
 config.txt
 secrets.txt .specstory/history/2025-08-06_21-32Z-refactor-script-for-parallel-execution.md
+.specstory/history/2025-08-06_21-32Z-refactor-script-for-parallel-execution.md
