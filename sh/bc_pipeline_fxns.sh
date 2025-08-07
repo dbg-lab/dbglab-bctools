@@ -92,7 +92,7 @@ fuzzy_bc_pipeline() {
     | ugrep -Z4 -o "${BC_PREFIX}.*" \
     | tee >(wc -l > $STATS_DIR/${prefix}.out_linecount.txt) \
     | tee >(awk 'NR % 10000 == 0 {
-        print "[" strftime("%H:%M:%S") "] '$prefix': processed " NR " sequences"}' \
+        print "[" strftime("%H:%M:%S") "] '$prefix': processed " NR " sequences"; fflush()}' \
             > $STATS_DIR/${prefix}.progress.log) \
     | sort --temporary-directory=$TMP_DIR - | uniq -c \
     | tee >(gzip > $OUT_DIR/${prefix}_bc_region.txt.gz) \
@@ -117,7 +117,7 @@ fuzzy_bc_pipeline_read1() {
     | ugrep -Z4 -o "${BC_PREFIX}.*" \
     | tee >(wc -l > $STATS_DIR/${prefix}.out_linecount.txt) \
     | tee >(awk 'NR % 10000 == 0 {
-        print "[" strftime("%H:%M:%S") "] '$prefix': processed " NR " sequences"}' \
+        print "[" strftime("%H:%M:%S") "] '$prefix': processed " NR " sequences"; fflush()}' \
             > $STATS_DIR/${prefix}.progress.log) \
     | sort --temporary-directory=$TMP_DIR | uniq -c \
     | tee >(gzip > $OUT_DIR/${prefix}_bc_region.txt.gz) \
