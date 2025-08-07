@@ -6,6 +6,12 @@
 # This script sets up an Amazon Linux 2023 EC2 instance with all the tools
 # needed for the dbglab-bctools bioinformatics workflow.
 #
+# Package Manager Strategy:
+# - Uses dnf (not yum) as Amazon Linux 2023's native package manager
+# - Tries to install tools via dnf first for better security and updates
+# - Falls back to source compilation when packages aren't available
+# - Maintains compatibility with original home directory installations
+#
 # Usage: 
 #   scp -i ~/.ssh/key.pem setup_ec2_biotools.sh ec2-user@instance-ip:~/
 #   ssh -i ~/.ssh/key.pem ec2-user@instance-ip "chmod +x setup_ec2_biotools.sh && ./setup_ec2_biotools.sh"
@@ -63,6 +69,7 @@ install_system_basics() {
     
     log_info "Installing additional system dependencies..."
     sudo dnf install -y \
+        htop \
         git \
         wget \
         unzip \
@@ -76,6 +83,16 @@ install_system_basics() {
         xz-devel \
         python3-pip \
         python3-devel
+    
+    log_info "Trying to install additional bioinformatics tools via package manager..."
+    # Try to install common bioinformatics tools that might be available
+    # These will fail silently if not available, and we'll compile from source later
+    sudo dnf install -y \
+        bedtools \
+        bowtie2 \
+        bcftools \
+        htslib-tools \
+        vcftools 2>/dev/null || log_info "Some bioinformatics packages not available via dnf"
     
     log_success "System basics installed"
 }
@@ -104,63 +121,99 @@ install_flash2() {
 
 install_bwa() {
     log_info "Installing BWA..."
-    cd /tmp
-    git clone https://github.com/lh3/bwa.git
-    cd bwa
-    make
-    sudo cp bwa /usr/local/bin/
     
-    # Also install to home directory (as per original script)
-    mkdir -p ~/bwa
-    cp bwa ~/bwa/
-    
-    log_success "BWA installed"
+    # Try package manager first
+    if sudo dnf install -y bwa 2>/dev/null; then
+        log_success "BWA installed via package manager"
+        
+        # Also create home directory symlink for compatibility
+        mkdir -p ~/bwa
+        ln -sf /usr/bin/bwa ~/bwa/bwa 2>/dev/null || true
+    else
+        log_info "BWA not available via package manager, compiling from source..."
+        cd /tmp
+        git clone https://github.com/lh3/bwa.git
+        cd bwa
+        make
+        sudo cp bwa /usr/local/bin/
+        
+        # Also install to home directory (as per original script)
+        mkdir -p ~/bwa
+        cp bwa ~/bwa/
+        log_success "BWA compiled and installed from source"
+    fi
 }
 
 install_samtools() {
     log_info "Installing samtools..."
-    cd /tmp
-    wget -q https://github.com/samtools/samtools/releases/download/1.19.2/samtools-1.19.2.tar.bz2
-    tar -xjf samtools-1.19.2.tar.bz2
-    cd samtools-1.19.2
-    ./configure --prefix=/usr/local
-    make
-    sudo make install
     
-    # Also install to home directory (as per original script)
-    mkdir -p ~/samtools
-    cp samtools ~/samtools/
-    
-    log_success "samtools installed"
+    # Try package manager first
+    if sudo dnf install -y samtools 2>/dev/null; then
+        log_success "samtools installed via package manager"
+        
+        # Also create home directory symlink for compatibility
+        mkdir -p ~/samtools
+        ln -sf /usr/bin/samtools ~/samtools/samtools 2>/dev/null || true
+    else
+        log_info "samtools not available via package manager, compiling from source..."
+        cd /tmp
+        wget -q https://github.com/samtools/samtools/releases/download/1.19.2/samtools-1.19.2.tar.bz2
+        tar -xjf samtools-1.19.2.tar.bz2
+        cd samtools-1.19.2
+        ./configure --prefix=/usr/local
+        make
+        sudo make install
+        
+        # Also install to home directory (as per original script)
+        mkdir -p ~/samtools
+        cp samtools ~/samtools/
+        log_success "samtools compiled and installed from source"
+    fi
 }
 
 install_ugrep() {
     log_info "Installing ugrep..."
-    cd /tmp
-    wget -q https://github.com/Genivia/ugrep/releases/download/v6.5.0/ugrep-6.5.0.tar.gz
-    tar -xzf ugrep-6.5.0.tar.gz
-    cd ugrep-6.5.0
-    ./configure --prefix=/usr/local
-    make
-    sudo make install
     
-    log_success "ugrep installed"
+    # Try package manager first
+    if sudo dnf install -y ugrep 2>/dev/null; then
+        log_success "ugrep installed via package manager"
+    else
+        log_info "ugrep not available via package manager, compiling from source..."
+        cd /tmp
+        wget -q https://github.com/Genivia/ugrep/archive/refs/tags/v7.5.0.tar.gz
+        tar -xzf v7.5.0.tar.gz
+        cd ugrep-7.5.0
+        ./configure --prefix=/usr/local
+        make
+        sudo make install
+        log_success "ugrep compiled and installed from source"
+    fi
 }
 
 install_fastq_multx() {
     log_info "Installing fastq-multx..."
-    cd /tmp
-    wget -q https://github.com/brwnj/fastq-multx/archive/refs/tags/1.4.3.tar.gz
-    tar -xzf 1.4.3.tar.gz
-    cd fastq-multx-1.4.3
-    make
-    sudo cp fastq-multx /usr/local/bin/
     
-    # Also install to home directory (as per original script)
-    mkdir -p ~/fastq-multx-1.4.3
-    cp fastq-multx ~/fastq-multx-1.4.3/
-    
-    log_success "fastq-multx installed"
+    # Try package manager first
+    if sudo dnf install -y fastq-multx 2>/dev/null; then
+        log_success "fastq-multx installed via package manager"
+        
+        # Also create home directory symlink for compatibility
+        mkdir -p ~/fastq-multx-1.4.3
+        ln -sf /usr/bin/fastq-multx ~/fastq-multx-1.4.3/fastq-multx 2>/dev/null || true
+    else
+        log_info "fastq-multx not available via package manager, compiling from source..."
+        cd /tmp
+        wget -q https://github.com/brwnj/fastq-multx/archive/refs/tags/1.4.3.tar.gz
+        tar -xzf 1.4.3.tar.gz
+        cd fastq-multx-1.4.3
+        make
+        sudo cp fastq-multx /usr/local/bin/
+        
+        # Also install to home directory (as per original script)
+        mkdir -p ~/fastq-multx-1.4.3
+        cp fastq-multx ~/fastq-multx-1.4.3/
+        log_success "fastq-multx compiled and installed from source"
+    fi
 }
 
 install_rclone() {
@@ -202,7 +255,9 @@ setup_python_environment() {
         seaborn \
         biopython \
         pysam \
-        argparse
+        argparse \
+        regex \
+        "pyarrow>=10.0.1" 
     
     log_success "Python environment configured"
 }
@@ -293,6 +348,14 @@ verify_installation() {
         fi
     done
     
+    # Check additional bioinformatics tools that might be available
+    local optional_tools=("bedtools" "bowtie2" "bcftools" "vcftools")
+    for tool in "${optional_tools[@]}"; do
+        if command -v "$tool" &> /dev/null; then
+            log_success "$tool: $(command -v $tool) (bonus tool)"
+        fi
+    done
+    
     # Check home directory installations
     log_info "Checking home directory installations..."
     for dir in "FLASH2-2.2.00" "bwa" "samtools" "fastq-multx-1.4.3"; do
@@ -324,12 +387,13 @@ This instance has been configured with all tools needed for the dbglab-bctools w
 - Development tools (gcc, make, etc.)
 
 ### Bioinformatics Tools
-- FLASH2 v2.2.00
-- BWA (latest)
-- samtools v1.19.2
-- ugrep v6.5.0
-- fastq-multx v1.4.3
-- rclone (latest)
+- FLASH2 v2.2.00 (compiled from source)
+- BWA (from package manager or compiled from source)
+- samtools (from package manager or v1.19.2 compiled from source)
+- ugrep (from package manager or v7.5.0 compiled from source)
+- fastq-multx (from package manager or v1.4.3 compiled from source)
+- rclone (latest binary)
+- Additional tools if available: bedtools, bowtie2, bcftools, vcftools
 
 ### Python Environment
 - Python 3.9.23 with numpy, pandas, biopython, etc.
