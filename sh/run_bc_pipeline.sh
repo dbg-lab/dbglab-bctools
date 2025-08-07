@@ -57,7 +57,8 @@ echo "======================================"
 # Setup
 source "$(dirname "$0")/bc_pipeline_fxns.sh"
 mkdir -p "$OUT_DIR" "$STATS_DIR"
-export S3_PATH OUT_DIR STATS_DIR PY_DIR TMP_DIR
+export S3_PATH OUT_DIR STATS_DIR PY_DIR TMP_DIR BC_PREFIX BC_SUFFIX BC_LEN_MIN BC_LEN_MAX MAX_READS
+export -f fuzzy_bc_region_match fuzzy_bc_pipeline fuzzy_bc_pipeline_read1
 
 # Run the pipeline
 echo "Getting file list and running pipeline..."
