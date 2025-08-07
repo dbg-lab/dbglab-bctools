@@ -83,10 +83,8 @@ fuzzy_bc_pipeline() {
         -r 150 \
         -f 130 \
         -O \
-        <(aws s3 cp "$S3_PATH/${prefix}_R1_001.fastq.gz" - | zcat - \
-            $(if [[ -n "$MAX_READS" ]]; then echo "| head -$((4 * MAX_READS))"; fi)) \
-        <(aws s3 cp "$S3_PATH/${prefix}_R2_001.fastq.gz" - | zcat - \
-            $(if [[ -n "$MAX_READS" ]]; then echo "| head -$((4 * MAX_READS))"; fi)) \
+        <(aws s3 cp "$S3_PATH/${prefix}_R1_001.fastq.gz" - | zcat - | { if [[ -n "$MAX_READS" ]]; then head -$((4 * MAX_READS)); else cat; fi; }) \
+        <(aws s3 cp "$S3_PATH/${prefix}_R2_001.fastq.gz" - | zcat - | { if [[ -n "$MAX_READS" ]]; then head -$((4 * MAX_READS)); else cat; fi; }) \
         2> $STATS_DIR/${prefix}_flash_stderr.txt \
     | tee >(wc -l | awk '{print $1/4}'> $STATS_DIR/${prefix}.fq_linecount.txt) \
     | grep -P '^[ATGCN]+$' \
@@ -112,7 +110,7 @@ fuzzy_bc_pipeline_read1() {
 
     # Pipe data from S3 into ugrep search for the barcode region
     aws s3 cp "$S3_PATH/${prefix}_R1_001.fastq.gz" - | zcat - \
-    $(if [[ -n "$MAX_READS" ]]; then echo "| head -$((4 * MAX_READS))"; fi) \
+    | { if [[ -n "$MAX_READS" ]]; then head -$((4 * MAX_READS)); else cat; fi; } \
     | tee >(wc -l | awk '{print $1/4}'> $STATS_DIR/${prefix}.fq_linecount.txt) \
     | grep -P '^[ATGCN]+$' \
     | ugrep -Z6 -o "${BC_PREFIX}.{${BC_LEN_MIN},${BC_LEN_MAX}}${BC_SUFFIX}" \
