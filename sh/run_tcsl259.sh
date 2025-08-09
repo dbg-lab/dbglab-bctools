@@ -16,14 +16,14 @@ export OUT_DIR="~/tcsl259/out"
 export STATS_DIR="~/tcsl259/stats"
 
 # Parallelization settings - adjust based on your workload and hardware
-export PARALLEL_JOBS=12     # Number of samples to process concurrently
-export UGREP_JOBS=4         # Threads for pattern matching within each sample
-export SORT_PARALLEL=4      # Threads for sorting within each sample
+export PARALLEL_FILES=12    # Number of samples to process concurrently
+export UGREP_THREADS=4      # Threads for all ugrep operations (filtering and pattern matching)
+export SORT_THREADS=4       # Threads for sorting within each sample
 
 # Tuning guide, based on available cores and number of samples:
-# - Many small files: High PARALLEL_JOBS (8-16), Lower UGREP_JOBS/SORT_PARALLEL (1-2)
-# - Few large files: Lower PARALLEL_JOBS (2-4), Higher UGREP_JOBS/SORT_PARALLEL (8-16)
-# PARALLEL_JOBS x UGREP_JOBS/SORT_PARALLEL should be about the number of cores available
+# - Many small files: High PARALLEL_FILES (8-16), Lower UGREP_THREADS/SORT_THREADS (1-2)
+# - Few large files: Lower PARALLEL_FILES (2-4), Higher UGREP_THREADS/SORT_THREADS (8-16)
+# PARALLEL_FILES x UGREP_THREADS/SORT_THREADS should be about the number of cores available
 
 # Directory configuration
 export TMP_DIR="~/data"  # Temporary directory for sorting (use fast storage if available)

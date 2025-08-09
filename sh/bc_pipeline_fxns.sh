@@ -40,8 +40,8 @@ MAX_READS=${MAX_READS:-}  # If set, limit to this many reads (useful for testing
 PROGRESS_FREQUENCY=${PROGRESS_FREQUENCY:-10000}  # How often to report progress (every N sequences)
 
 # Parallelization parameters (set by calling script)
-# UGREP_JOBS: Number of threads for ugrep operations 
-# SORT_PARALLEL: Number of threads for sort operations
+# UGREP_THREADS: Number of threads for all ugrep operations (filtering and pattern matching)
+# SORT_THREADS: Number of threads for sort operations
 
 fuzzy_bc_region_match() {
     prefix=$1
@@ -97,14 +97,14 @@ fuzzy_bc_pipeline() {
         <(aws s3 cp "$S3_PATH/${prefix}_R2_001.fastq.gz" - | zcat - | { if [[ -n "$MAX_READS" ]]; then head -$((4 * MAX_READS)); else cat; fi; }) \
         2> $STATS_DIR/${prefix}_flash_stderr.txt \
     | tee >(wc -l | awk '{print $1/4}'> $STATS_DIR/${prefix}.fq_linecount.txt) \
-    | grep -P '^[ATGCN]+$' \
-    | ugrep --jobs=$UGREP_JOBS -Z6 -o "${BC_PREFIX}.{${BC_LEN_MIN},${BC_LEN_MAX}}${BC_SUFFIX}" \
-    | ugrep --jobs=$UGREP_JOBS -Z4 -o "${BC_PREFIX}.*" \
+    | ugrep --jobs=$UGREP_THREADS -P '^[ATGCN]+$' \
+    | ugrep --jobs=$UGREP_THREADS -Z6 -o "${BC_PREFIX}.{${BC_LEN_MIN},${BC_LEN_MAX}}${BC_SUFFIX}" \
+    | ugrep --jobs=$UGREP_THREADS -Z4 -o "${BC_PREFIX}.*" \
     | tee >(wc -l > $STATS_DIR/${prefix}.out_linecount.txt) \
     | tee >(awk 'NR % '$PROGRESS_FREQUENCY' == 0 {
         print "[" strftime("%H:%M:%S") "] '$prefix': processed " NR " sequences"; fflush()}' \
             > $STATS_DIR/${prefix}.progress.log) \
-    | sort --parallel=$SORT_PARALLEL --temporary-directory=$TMP_DIR - | uniq -c \
+    | sort --parallel=$SORT_THREADS --temporary-directory=$TMP_DIR - | uniq -c \
     | tee >(gzip > $OUT_DIR/${prefix}_bc_region.txt.gz) \
     | python3 $PY_DIR/itam_costim_bc_regex.py - \
         2> $STATS_DIR/${prefix}_bc_regex.txt \
@@ -122,14 +122,14 @@ fuzzy_bc_pipeline_read1() {
     aws s3 cp "$S3_PATH/${prefix}_R1_001.fastq.gz" - | zcat - \
     | { if [[ -n "$MAX_READS" ]]; then head -$((4 * MAX_READS)); else cat; fi; } \
     | tee >(wc -l | awk '{print $1/4}'> $STATS_DIR/${prefix}.fq_linecount.txt) \
-    | grep -P '^[ATGCN]+$' \
-    | ugrep --jobs=$UGREP_JOBS -Z6 -o "${BC_PREFIX}.{${BC_LEN_MIN},${BC_LEN_MAX}}${BC_SUFFIX}" \
-    | ugrep --jobs=$UGREP_JOBS -Z4 -o "${BC_PREFIX}.*" \
+    | ugrep --jobs=$UGREP_THREADS -P '^[ATGCN]+$' \
+    | ugrep --jobs=$UGREP_THREADS -Z6 -o "${BC_PREFIX}.{${BC_LEN_MIN},${BC_LEN_MAX}}${BC_SUFFIX}" \
+    | ugrep --jobs=$UGREP_THREADS -Z4 -o "${BC_PREFIX}.*" \
     | tee >(wc -l > $STATS_DIR/${prefix}.out_linecount.txt) \
     | tee >(awk 'NR % '$PROGRESS_FREQUENCY' == 0 {
         print "[" strftime("%H:%M:%S") "] '$prefix': processed " NR " sequences"; fflush()}' \
             > $STATS_DIR/${prefix}.progress.log) \
-    | sort --parallel=$SORT_PARALLEL --temporary-directory=$TMP_DIR | uniq -c \
+    | sort --parallel=$SORT_THREADS --temporary-directory=$TMP_DIR | uniq -c \
     | tee >(gzip > $OUT_DIR/${prefix}_bc_region.txt.gz) \
     | python3 $PY_DIR/itam_costim_bc_regex.py - \
         2> $STATS_DIR/${prefix}_bc_regex.txt \
