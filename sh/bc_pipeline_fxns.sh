@@ -97,7 +97,7 @@ fuzzy_bc_pipeline() {
         <(aws s3 cp "$S3_PATH/${prefix}_R2_001.fastq.gz" - | zcat - | { if [[ -n "$MAX_READS" ]]; then head -$((4 * MAX_READS)); else cat; fi; }) \
         2> $STATS_DIR/${prefix}_flash_stderr.txt \
     | tee >(wc -l | awk '{print $1/4}'> $STATS_DIR/${prefix}.fq_linecount.txt) \
-    | ugrep --jobs=$UGREP_THREADS -P '^[ATGCN]+$' \
+    | ugrep --jobs=$UGREP_THREADS -E '^[ATGCN]+$' \
     | ugrep --jobs=$UGREP_THREADS -Z6 -o "${BC_PREFIX}.{${BC_LEN_MIN},${BC_LEN_MAX}}${BC_SUFFIX}" \
     | ugrep --jobs=$UGREP_THREADS -Z4 -o "${BC_PREFIX}.*" \
     | tee >(wc -l > $STATS_DIR/${prefix}.out_linecount.txt) \
@@ -122,7 +122,7 @@ fuzzy_bc_pipeline_read1() {
     aws s3 cp "$S3_PATH/${prefix}_R1_001.fastq.gz" - | zcat - \
     | { if [[ -n "$MAX_READS" ]]; then head -$((4 * MAX_READS)); else cat; fi; } \
     | tee >(wc -l | awk '{print $1/4}'> $STATS_DIR/${prefix}.fq_linecount.txt) \
-    | ugrep --jobs=$UGREP_THREADS -P '^[ATGCN]+$' \
+    | ugrep --jobs=$UGREP_THREADS -E '^[ATGCN]+$' \
     | ugrep --jobs=$UGREP_THREADS -Z6 -o "${BC_PREFIX}.{${BC_LEN_MIN},${BC_LEN_MAX}}${BC_SUFFIX}" \
     | ugrep --jobs=$UGREP_THREADS -Z4 -o "${BC_PREFIX}.*" \
     | tee >(wc -l > $STATS_DIR/${prefix}.out_linecount.txt) \
